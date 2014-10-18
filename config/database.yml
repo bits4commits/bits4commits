@@ -1,0 +1,47 @@
+
+<% branch_name = `git rev-parse --abbrev-ref HEAD`.strip %>
+
+development:
+  adapter: sqlite3
+  pool:    5
+  timeout: 5000
+<% case branch_name ;
+   when 'master'       %>
+  database: db/bits4commits_development.sqlite3
+<% when 'tip4commit'   %>
+  database: db/tip4commit_development.sqlite3
+<% when 'peer4commit'  %>
+  database: db/peer4commit_development.sqlite3
+<% when 'prime4commit' %>
+  database: db/prime4commit_development.sqlite3
+<% else %>
+<% puts "no db specified for this branch" %>
+<% end %>
+
+
+test:
+  adapter:  sqlite3
+  pool:     5
+  timeout:  5000
+<% case branch_name ;
+   when 'master'       %>
+  database: db/bits4commits_test.sqlite3
+<% when 'tip4commit'   %>
+  database: db/tip4commit_test.sqlite3
+<% when 'peer4commit'  %>
+  database: db/peer4commit_test.sqlite3
+<% when 'prime4commit' %>
+  database: db/prime4commit_test.sqlite3
+<% else %>
+<% puts "no db specified for this branch" %>
+<% end %>
+
+
+production:
+  adapter:  mysql2
+  encoding: utf8
+  database: tip4commit
+  username: root
+  password: 
+  socket:   /var/run/mysqld/mysqld.sock
+
