@@ -2,8 +2,14 @@ Feature: A project collaborator can change the tips of commits
   Background:
     Given a "github" project named "seldon/seldons-project" exists
     And   the project collaborators are:
-      | seldon  |
-      | daneel  |
+      | seldon |
+      | daneel |
+    And   a "github" collaborator named "seldon" has previously signed-in via oauth
+    And   a "github" collaborator named "daneel" has previously signed-in via oauth
+    And   a "github" collaborator named "bad guy" has previously signed-in via oauth
+#     And   a "bitbucket" collaborator named "seldon" has previously signed-in via oauth
+#     And   a "bitbucket" collaborator named "daneel" has previously signed-in via oauth
+#     And   a "bitbucket" collaborator named "bad guy" has previously signed-in via oauth
     And   a developer named "yugo" exists with a bitcoin address
     And   a developer named "gaal" exists without a bitcoin address
     And   our fee is "0"
@@ -21,7 +27,7 @@ Feature: A project collaborator can change the tips of commits
     And  there should be 0 email sent
 
   Scenario: A collaborator wants to alter the tips
-    Given I'm signed in as "seldon"
+    Given I am signed in via "github" as "seldon"
     When  the project syncs with the remote repo
     And   I visit the "seldon/seldons-project github-project" page
     Then  I should be on the "seldon/seldons-project github-project" page
@@ -83,47 +89,28 @@ Feature: A project collaborator can change the tips of commits
     But   there should be no tip for commit "FFF"
     And   there should be 0 email sent
 
-  Scenario: A non collaborator does not see the settings button
-    Given I'm signed in as "yugo"
-    And   I visit the "seldon/seldons-project github-project" page
-    Then  I should be on the "seldon/seldons-project github-project" page
-    And   I should not see "Change project settings"
-
-  Scenario: A non collaborator does not see the decide tip amounts button
-    Given the project has undedided tips
-    And   I'm signed in as "yugo"
-    And   I visit the "seldon/seldons-project github-project" page
-    Then  I should be on the "seldon/seldons-project github-project" page
-    And   I should not see "Decide tip amounts"
-
-  Scenario: A non collaborator goes to the edit page of a project
-    Given I'm signed in as "yugo"
-    When  I visit the "seldon/seldons-project github-project edit" page
-    Then  I should be on the "home" page
-    And   I should see "You are not authorized to perform this action!"
-
-  Scenario: A non collaborator sends a forged update on a project
-    Given I'm signed in as "yugo"
+  Scenario: A non-collaborator sends a forged update on a project
+    Given I am signed in via "email" as "yugo"
     When  I send a forged request to enable tip holding on the project
     Then  I should be on the "home" page
     And   I should see "You are not authorized to perform this action!"
     And   the project should not hold tips
 
   Scenario: A collaborator sends a forged update on a project
-    Given I'm signed in as "daneel"
+    Given I am signed in via "github" as "daneel"
     When  the project syncs with the remote repo
     When  I send a forged request to enable tip holding on the project
     Then  I should be on the "seldon/seldons-project github-project" page
     And   the project should hold tips
 
   Scenario Outline: A user sends a forged request to set a tip amount
-    When  the project syncs with the remote repo
-    Given the project has 1 undecided tip
-    When  I'm signed in as "<user>"
+    Given the project syncs with the remote repo
+    When  the project has 1 undecided tip
+    And   I am signed in via "github" as "<user>"
     And   I visit the "seldon/seldons-project github-project" page
     Then  I should be on the "seldon/seldons-project github-project" page
-    And   I send a forged request to set the amount of the first undecided tip of the project
-    And   the project should have <remaining undecided tips> undecided tips
+    When  I send a forged request to set the amount of the first undecided tip of the project
+    Then  the project should have <remaining undecided tips> undecided tips
 
     Examples:
       | user   | remaining undecided tips |
@@ -135,7 +122,7 @@ Feature: A project collaborator can change the tips of commits
     And   a new commit "last" is made
     And   the project holds tips
     When  the project syncs with the remote repo
-    And   I'm signed in as "seldon"
+    And   I am signed in via "github" as "seldon"
     And   I visit the "seldon/seldons-project github-project" page
     Then  I should be on the "seldon/seldons-project github-project" page
     And   I should see "Decide tip amounts"
@@ -157,12 +144,19 @@ Feature: A project collaborator can change the tips of commits
     And   a new commit "fake commit" is made
     And   the project holds tips
     When  the project syncs with the remote repo
-    And   I'm signed in as "<user>"
+    And   I am signed in via "<login>" as "<user>"
     When  regarding the "github" project named "seldon/seldons-project"
     And   I send a forged request to change the percentage of commit "BBB" to "5"
     Then  <consequences>
 
     Examples:
-      | user    | consequences                                        |
-      | seldon  | there should be a tip of "25" for commit "BBB"      |
-      | bad guy | the tip amount for commit "BBB" should be undecided |
+      | user    | login     | consequences                                        |
+      | seldon  | email     | there should be a tip of "25" for commit "BBB"      |
+      | seldon  | github    | there should be a tip of "25" for commit "BBB"      |
+      | seldon  | bitbucket | there should be a tip of "25" for commit "BBB"      |
+      | daneel  | email     | there should be a tip of "25" for commit "BBB"      |
+      | daneel  | github    | there should be a tip of "25" for commit "BBB"      |
+      | daneel  | bitbucket | there should be a tip of "25" for commit "BBB"      |
+      | bad guy | email     | the tip amount for commit "BBB" should be undecided |
+      | bad guy | github    | the tip amount for commit "BBB" should be undecided |
+      | bad guy | bitbucket | the tip amount for commit "BBB" should be undecided |

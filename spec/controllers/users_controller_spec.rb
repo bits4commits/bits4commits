@@ -19,7 +19,7 @@ describe UsersController do
   end
 
   describe '#show' do
-    let(:user) { create(:user) }
+    let(:user)    { create :user , :email => "some-dood@somehost.net" }
     let(:subject) { get :show , :nickname => user.nickname }
 
     context 'when logged in' do
@@ -38,7 +38,7 @@ describe UsersController do
 
           it 'assigns @user' do
             subject
-            expect(assigns[:user].name).to eq 'kd'
+            expect(assigns[:user].name).to eq 'some-dood'
           end
 
           it 'assigns @user_tips' do
@@ -53,11 +53,11 @@ describe UsersController do
         end
 
         context 'when viewing other\'s page' do
-          let(:new_user) { create(:user) }
-          let(:subject) { get :show, id: new_user.id }
+          let(:new_user) { create :user , :email => "some-dood@somehost.net" }
+          let(:subject)  { get :show, id: new_user.id }
 
-          it 'redirect to root_path' do
-            expect(subject).to redirect_to root_path
+          it 'redirect to users_path' do
+            expect(subject).to redirect_to users_path
           end
 
           it 'sets flash error message' do
@@ -68,15 +68,30 @@ describe UsersController do
       end
 
       context 'when user not found' do
-        let(:subject) { get :show , :nickname => 'unknown-user' }
+        context 'by id' do
+          let(:subject) { get :show, id: 999999 }
 
-        it 'redirect to users_path' do
-          expect(subject).to redirect_to users_path
+          it 'redirect to users_path' do
+            expect(subject).to redirect_to users_path
+          end
+
+          it 'sets flash error message' do
+            subject
+            expect(flash[:error]).to eq('User not found')
+          end
         end
 
-        it 'sets flash error message' do
-          subject
-          expect(flash[:error]).to eq('User not found')
+        context 'by nickname' do
+          let(:subject) { get :show , :nickname => 'unknown-user' }
+
+          it 'redirect to users_path' do
+            expect(subject).to redirect_to users_path
+          end
+
+          it 'sets flash error message' do
+            subject
+            expect(flash[:error]).to eq('User not found')
+          end
         end
       end
     end
@@ -122,11 +137,11 @@ describe UsersController do
   end
 
   describe "pretty url routing" do
-    let(:user) { create(:user) }
+    let(:user) { create :user , :email => "some-dood@somehost.net" }
 
     it "regex rejects reserved user paths" do
       # accepted pertty url usernames
-      should_accept = [' ' , 'logi' , 'ogin' , 's4c2' , '42x' , 'nick name' , 'kd']
+      should_accept = [' ' , 'logi' , 'ogin' , 's4c2' , '42x' , 'nick name' , 'some-dood']
       # reserved routes (rejected pertty url usernames)
       should_reject = ['' , '1' , '42']
 
@@ -140,14 +155,14 @@ describe UsersController do
       { :get => "/users/#{user.nickname}" }.should route_to(
         :controller => "users" ,
         :action     => "show"  ,
-        :nickname   => "kd"    )
+        :nickname   => "some-dood"    )
     end
 
     it "routes GET /users/:nickname/tips to Tips#index" do
       { :get => "/users/#{user.nickname}/tips" }.should route_to(
         :controller => "tips"  ,
         :action     => "index" ,
-        :nickname   => "kd"    )
+        :nickname   => "some-dood"    )
     end
   end
 end

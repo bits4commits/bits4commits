@@ -23,7 +23,7 @@ def add_new_commit commit_id , nickname , params = {}
     commit: {
       message: "Some changes",
       author: {
-        email: "#{nickname}@example.com",
+        email: (make_primary_email nickname) ,
       },
     },
   }
@@ -32,6 +32,8 @@ def add_new_commit commit_id , nickname , params = {}
   @new_commits                        ||= {}
   @new_commits[project_id]            ||= {}
   @new_commits[project_id][commit_id]   = defaults.deep_merge params
+
+p "add_new_commit nickname='#{nickname}' commit_id='#{commit_id}' - #{@new_commits[project_id].keys.size} for #{@current_project.full_name}" if DBG
 end
 
 def find_new_commit commit_id
@@ -69,7 +71,8 @@ Given(/^the author of commit "(.*?)" is "(.*?)"$/) do |commit_id , nickname|
   commit = find_new_commit commit_id
   raise "no such commit" if commit.nil?
 
-  commit.deep_merge!(author: {login: nickname}, commit: {author: {email: "#{nickname}@example.com"}})
+  email = make_primary_email nickname
+  commit.deep_merge!(author: {login: nickname}, commit: {author: {email: email}})
 end
 
 Given(/^the message of commit "(.*?)" is "(.*?)"$/) do |commit_id , commit_msg|
@@ -148,18 +151,38 @@ Then(/^the project should hold tips$/) do
   @current_project.reload.hold_tips.should eq(true)
 end
 
-Given(/^the project has undedided tips$/) do
-  create(:undecided_tip, project: @current_project)
+Given(/^the project has undecided tips$/) do
+  # NOTE: these are attributed to the first collaborator of the @current_project
+  #           which will result in a User instantiated if none exists
+  #       this user's password will be changed to default_password
+  #       this step must be preceeded by step "the project syncs with the remote repo"
+  #           which itself must be preceeded by step "a '...' project named '...' exists"
+  #           and then by step "the project collaborators are:"
+  raise "no project exists"        if @current_project.nil?
+  raise "no project collaborators" if @current_project.collaborators.blank?
+
+  collaborator_name = @current_project.collaborators.first.login
+  user              = @users[collaborator_name]
+  user.password     = default_password
+  provider          = project_provider @current_project
+
+  create :undecided_tip , :project => @current_project , :user => user
   @current_project.reload.should have_undecided_tips
 end
 
-Given(/^the project has (\d+) undecided tip$/) do |arg1|
-  @current_project.tips.undecided.each(&:destroy)
-  create(:undecided_tip, project: @current_project)
-  @current_project.reload.should have_undecided_tips
+Given(/^the project has (\d+) undecided tip$/) do |n_tips|
+  raise "no project exists" if @current_project.nil?
+
+  @current_project.tips.undecided.each &:destroy
+  n_tips.to_i.times { step "the project has undecided tips" }
+end
+
+Then(/^the project should have (\d+) undecided tips$/) do |arg1|
+  @current_project.tips.undecided.size.should eq(arg1.to_i)
 end
 
 Given(/^I send a forged request to set the amount of the first undecided tip of the project$/) do
+print "step 'I send a forged request' tips=#{@current_project.tips.undecided.to_yaml}\n" if DBG
   tip = @current_project.tips.undecided.first
   tip.should_not be_nil
   params = {
@@ -192,8 +215,4 @@ When(/^I send a forged request to change the percentage of commit "(.*?)" to "(.
 
   path = decide_tip_amounts_project_path @current_project
   page.driver.browser.process_and_follow_redirects :patch , path , params
-end
-
-Then(/^the project should have (\d+) undecided tips$/) do |arg1|
-  @current_project.tips.undecided.size.should eq(arg1.to_i)
 end

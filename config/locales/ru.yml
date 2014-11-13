@@ -208,7 +208,7 @@ ru:
       sign_in_with: "Войти с %{provider}"
     errors:
       primary_email: ваш email адрес должен быть подтвержден.
-      onmiauth_info: не удалось получить информацию.
+      omniauth_info: не удалось получить информацию.
   activerecord:
     attributes:
       user:

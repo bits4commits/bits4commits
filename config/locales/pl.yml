@@ -210,7 +210,7 @@ pl:
       sign_in_with: "Zaloguj się za pomocą %{provider}"
     errors:
       primary_email: Twój główny e-mail musi być potwierdzony.
-      onmiauth_info: Nie byliśmy w stanie otrzymać twoich danych.
+      omniauth_info: Nie byliśmy w stanie otrzymać twoich danych.
   activerecord:
     attributes:
       user:

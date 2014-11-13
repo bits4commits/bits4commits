@@ -1,51 +1,60 @@
 require 'spec_helper'
 
 describe User do
-  let(:user) { create(:user) }
+  describe 'display_name' do
+    context 'when email and nickname are present and name is present' do
+      let(:a_user) { create :user , :email => 'some-dood@example.com' , :nickname => 'dood-mon' , :name => 'dood mon' }
 
-  describe 'full_name' do
-    context 'when name is present' do
       it 'returns name' do
-        expect(user.display_name).to eq(user.name)
+        expect(a_user.display_name).to eq a_user.name
       end
     end
 
-    context 'when name is absent and nickname is present' do
+    context 'when email and nickname are present but name is absent' do
+      let(:a_user) { create :user , :email => 'some-dood@example.com' , :nickname => 'dood-mon' }
+
       it 'returns nickname' do
-        user.name = nil
-        expect(user.display_name).to eq(user.nickname)
+        expect(a_user.display_name).to eq a_user.nickname
       end
     end
 
-    context 'when name and nickname is absent and email is absent' do
-      it 'returns email' do
-        user.name = user.nickname = nil
-        expect(user.display_name).to eq(user.email)
+    context 'when email is present but nickname is absent' do
+      let(:a_user) { create :user , :email => 'some-dood@example.com' }
+
+      it 'returns name split from email' do
+        expect(a_user.display_name).to eq 'some-dood'
+      end
+    end
+
+    context 'when email is absent' do
+      it 'raises exception' do
+        expect { create :user }.to raise_exception ActiveRecord::RecordInvalid
       end
     end
   end
 
   describe 'bitcoin_address' do
+    let(:a_user) { create :user , :email => 'some-dood@example.com' }
+
     context 'when address is blank' do
       it 'should be valid' do
-        user.bitcoin_address = ''
-        user.should be_valid
+        a_user.bitcoin_address = ''
+        a_user.should be_valid
       end
     end
 
     context 'when address is valid' do
       it 'should be valid' do
-        user.bitcoin_address = '1M4bS4gPyA6Kb8w7aXsgth9oUZWcRk73tQ'
-        user.should be_valid
+        a_user.bitcoin_address = '1M4bS4gPyA6Kb8w7aXsgth9oUZWcRk73tQ'
+        a_user.should be_valid
       end
     end
 
     context 'when address is not valid' do
       it 'should not be valid' do
-        user.bitcoin_address = '1M4bS4gPyA6Kb8w7aXsgth9oUZXXXXXXXX'
-        user.should_not be_valid
+        a_user.bitcoin_address = '1M4bS4gPyA6Kb8w7aXsgth9oUZXXXXXXXX'
+        a_user.should_not be_valid
       end
     end
-
   end
 end

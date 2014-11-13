@@ -52,6 +52,13 @@ class ApplicationController < ActionController::Base
   end
 
   def load_user params
+print "\nload_user --> " +
+"is_via_user = #{self.is_a? UsersController} " +
+"is_via_tips = #{self.is_a? TipsController}\n" +
+"is_standard_path    = #{params[:id]      .present? && (self.is_a? UsersController)}\n" +
+"is_association_path = #{params[:user_id] .present?}\n" +
+"is_pretty_path      = #{params[:nickname].present?}\n" if DBG
+
     return unless (is_via_user = self.is_a? UsersController) ||
                   (is_via_tips = self.is_a? TipsController)
 
@@ -59,13 +66,17 @@ class ApplicationController < ActionController::Base
                   (is_association_path = params[:user_id] .present?)                ||
                   (is_pretty_path      = params[:nickname].present?)
 
-    if (is_standard_path || is_association_path)     &&
-       (user_id = (is_via_user && params[:id])    ||
-                  (is_via_tips && params[:user_id])) &&
-       (@user = User.where(:id => user_id).first)
-      redirect_to user_tips_pretty_path @user.nickname if is_via_tips
-    elsif is_pretty_path
+    if is_pretty_path
       @user = User.where('lower(`nickname`) = ?' , params[:nickname].downcase).first
+
+print "load_user is_pretty_path '#{params[:nickname].downcase}' @user=#{@user.to_yaml}\n" if DBG
+    elsif (user_id = (is_via_user && params[:id])    ||
+                     (is_via_tips && params[:user_id]))
+      @user = User.find_by :id => user_id
+
+print "load_user !is_pretty_path @user=#{@user.to_yaml}\n" if DBG
+
+      redirect_to user_tips_pretty_path @user.nickname if is_via_tips and @user.present?
     end
 
     if @user.nil?

@@ -25,7 +25,7 @@ Feature: Developers may sign-up to receive tip offers
     Then  there should be no tip for commit "CCC"
     And   there should be 0 email sent
 
-    When  I sign in as "gaal"
+    When  I sign in via "email" as "gaal"
     And   a new commit "DDD" is made by a developer named "gaal"
     When  the project syncs with the remote repo
     Then  there should be a tip of "4.95" for commit "CCC"

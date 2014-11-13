@@ -8,7 +8,7 @@ class Project < ActiveRecord::Base
   accepts_nested_attributes_for :tipping_policies_text
 
   validates :full_name, :github_id, uniqueness: true, presence: true
-  validates :host, inclusion: [ "github", "bitbucket" ], presence: true
+  validates :host, inclusion: User.omniauth_providers.map(&:to_s), presence: true
 
   search_syntax do
     search_by :text do |scope, phrases|
@@ -33,15 +33,13 @@ class Project < ActiveRecord::Base
   end
 
   def update_repository_info repo
-    self.github_id        = repo.id
-    self.name             = repo.name
-    self.full_name        = repo.full_name
+    self.github_id = repo.id
+    self.name = repo.name
+    self.full_name = repo.full_name
     self.source_full_name = repo.source.full_name rescue ''
-    self.description      = repo.description
-    self.watchers_count   = repo.watchers_count
-    self.language         = repo.language
-    self.avatar_url       = repo.organization.rels[:avatar].href if repo.organization.present?
-
+    self.description = repo.description
+    self.watchers_count = repo.watchers_count
+    self.language = repo.language
     self.save!
   end
 
@@ -130,6 +128,8 @@ class Project < ActiveRecord::Base
   end
 
   def tip_for commit
+print "tip_for amount=#{next_tip_amount} tip?=#{(Tip.exists? commit: commit.sha)? (Tip.find_by commit: commit.sha).commit[0..2] : "nil"} user=#{(u = User.find_by_commit commit)? "[#{u.id}]='#{u.nickname}' '#{u.email}' '#{(u.bitcoin_address)? "yes" : "nil"}'" : "nil"}\n" if DBG
+
     if (next_tip_amount > 0) && !Tip.exists?(commit: commit.sha)
       return unless (user = User.find_by_commit commit)
 
@@ -140,7 +140,7 @@ class Project < ActiveRecord::Base
       else
         amount = next_tip_amount
       end
-
+p "tip_for CREATING TIP" if DBG
       # create tip
       tip = tips.create({ user: user,
                           amount: amount,

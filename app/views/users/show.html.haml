@@ -21,7 +21,8 @@
 %p= @user.email
 = twitter_bootstrap_form_for @user do |f|
   = f.text_field :bitcoin_address, placeholder: t('.bitcoin_address_placeholder')
-  = f.text_field :display_name
+  = f.text_field :nickname
+  = f.text_field :display_name, placeholder: @user.display_name
   - if f.object.bitcoin_address.blank?
     = f.check_box :unsubscribed, t('.notify'), { checked: !f.object.unsubscribed? }, '0', '1'
   %br

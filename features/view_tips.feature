@@ -13,7 +13,7 @@ Feature: Visitors should be able to see claimed tips
     When  the project syncs with the remote repo
     Then  there should be a tip of "5" for commit "BBB"
     And   there should be a tip of "4.95" for commit "CCC"
-    Given I'm not signed in
+    Given I am not signed in
 
   Scenario: Visitors should see all claimed tips but not unclaimed tips
     When  I visit the "tips" page

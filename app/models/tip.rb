@@ -1,5 +1,5 @@
 class Tip < ActiveRecord::Base
-  belongs_to :user
+  belongs_to :user, inverse_of: :tips
   belongs_to :sendmany
   belongs_to :project, inverse_of: :tips
 
@@ -112,6 +112,8 @@ class Tip < ActiveRecord::Base
   end
 
   def notify_user
+p "notify_user  IN" if DBG
+
     if amount && amount > 0 && user.bitcoin_address.blank? &&
         !user.unsubscribed && !project.disable_notifications &&
         user.balance > 21000000*1e8
@@ -127,6 +129,8 @@ class Tip < ActiveRecord::Base
   end
 
   def notify_user_if_just_decided
+p "notify_user_if_just_decided user=#{(user)? user.nickname : 'nil'} amount_was.nil?=#{amount_was.nil?} amount=#{amount} #{(amount_was.nil? and amount)? 'notifying' : ''}" if DBG
+
     notify_user if amount_was.nil? and amount
   end
 

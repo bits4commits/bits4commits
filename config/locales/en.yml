@@ -211,7 +211,7 @@ en:
       sign_in_with: "Sign in with %{provider}"
     errors:
       primary_email: your primary email address should be verified.
-      onmiauth_info: we were unable to fetch your information.
+      omniauth_info: we were unable to fetch your information.
   activerecord:
     attributes:
       user:

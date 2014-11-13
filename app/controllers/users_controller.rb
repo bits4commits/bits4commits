@@ -38,7 +38,7 @@ class UsersController < ApplicationController
   private
 
   def users_params
-    params.require(:user).permit(:bitcoin_address, :password, :password_confirmation, :unsubscribed, :display_name)
+    params.require(:user).permit(:bitcoin_address, :password, :password_confirmation, :unsubscribed, :display_name, :nickname)
   end
 
   def load_user ; super params ; end ;
@@ -46,7 +46,7 @@ class UsersController < ApplicationController
   def valid_user!
     if current_user != @user
       flash[:error] = I18n.t('errors.access_denied')
-      redirect_to root_path and return
+      redirect_to users_path and return
     end
   end
 

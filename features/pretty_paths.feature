@@ -19,26 +19,50 @@ Feature: The site routes pretty paths uniformly
     When  I browse to the explicit path "projects/1"
     Then  I should be on the "seldon/seldons-project github-project" page
 
+  Scenario: Project edit page is inaccessible via project name without oauth sign up
+    Given I am signed in via "email" as "seldon"
+    When  the project syncs with the remote repo
+    And   I visit the "seldon/seldons-project github-project edit" page
+    Then  I should be on the "home" page
+
+  Scenario: Project edit page is inaccessible via project id without oauth sign up
+    Given I am signed in via "email" as "seldon"
+    When  the project syncs with the remote repo
+    And   I browse to the explicit path "projects/1/edit"
+    Then  I should be on the "home" page
+
   Scenario: Project edit page is accessible via project name
-    Given I'm signed in as "seldon"
+    Given I am signed in via "github" as "seldon"
     When  the project syncs with the remote repo
     And   I visit the "seldon/seldons-project github-project edit" page
     Then  I should be on the "seldon/seldons-project github-project edit" page
 
   Scenario: Project edit page is accessible via project id
-    Given I'm signed in as "seldon"
+    Given I am signed in via "github" as "seldon"
     When  the project syncs with the remote repo
     And   I browse to the explicit path "projects/1/edit"
     Then  I should be on the "seldon/seldons-project github-project edit" page
 
+  Scenario: Project decide_tip_amounts page is inaccessible via project name without oauth sign up
+    Given I am signed in via "email" as "seldon"
+    When  the project syncs with the remote repo
+    When  I visit the "seldon/seldons-project github-project decide_tip_amounts" page
+    Then  I should be on the "home" page
+
+  Scenario: Project decide_tip_amounts page is inaccessible via project id without oauth sign up
+    Given I am signed in via "email" as "seldon"
+    When  the project syncs with the remote repo
+    When  I browse to the explicit path "projects/1/decide_tip_amounts"
+    Then  I should be on the "home" page
+
   Scenario: Project decide_tip_amounts page is accessible via project name
-    Given I'm signed in as "seldon"
+    Given I am signed in via "github" as "seldon"
     When  the project syncs with the remote repo
     When  I visit the "seldon/seldons-project github-project decide_tip_amounts" page
     Then  I should be on the "seldon/seldons-project github-project decide_tip_amounts" page
 
   Scenario: Project decide_tip_amounts page is accessible via project id
-    Given I'm signed in as "seldon"
+    Given I am signed in via "github" as "seldon"
     When  the project syncs with the remote repo
     When  I browse to the explicit path "projects/1/decide_tip_amounts"
     Then  I should be on the "seldon/seldons-project github-project decide_tip_amounts" page
@@ -117,19 +141,19 @@ Feature: The site routes pretty paths uniformly
     And   I should see "You need to sign in or sign up before continuing"
 
   Scenario: User show page is inaccessible via user name to other users
-    Given I'm signed in as "yugo"
+    Given I am signed in via "email" as "yugo"
     When  I visit the "seldon user" page
-    Then  I should be on the "home" page
+    Then  I should be on the "users" page
     And   I should see "You are not authorized to perform this action"
 
   Scenario: User show page is inaccessible via user id to other users
-    Given I'm signed in as "yugo"
+    Given I am signed in via "email" as "yugo"
     When  I browse to the explicit path "users/1"
-    Then  I should be on the "home" page
+    Then  I should be on the "users" page
     And   I should see "You are not authorized to perform this action"
 
   Scenario: User show page is accessible via user name to that user
-    Given I'm signed in as "seldon"
+    Given I am signed in via "email" as "seldon"
     When  I visit the "seldon user" page
     Then  I should be on the "seldon user" page
     And   I should see "seldon Balance 0.00000000 Ƀ"
@@ -137,19 +161,19 @@ Feature: The site routes pretty paths uniformly
     And   I should see "Bitcoin address"
 
   Scenario: User show page is accessible via user id to that user
-    Given I'm signed in as "seldon"
+    Given I am signed in via "email" as "seldon"
     When  I browse to the explicit path "users/1"
     Then  I should be on the "seldon user" page
     And   I should see "seldon Balance 0.00000000 Ƀ"
     And   I should see "E-mail seldon@example.com"
     And   I should see "Bitcoin address"
 
-  Scenario: Unknown user tips page user name redirects to users page
+  Scenario: Unknown user tips page via user name redirects to users page
     When  I visit the "unknown-user user tips" page
     Then  I should be on the "users" page
     And   I should see "User not found"
 
-  Scenario: Unknown user tips page pretty id redirects to users page
+  Scenario: Unknown user tips page via user id redirects to users page
     When  I browse to the explicit path "users/999999/tips"
     Then  I should be on the "users" page
     And   I should see "User not found"

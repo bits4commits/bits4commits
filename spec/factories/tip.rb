@@ -1,7 +1,7 @@
 FactoryGirl.define do
   factory :tip do
-    association :user
-    association :project
+    association :project # project is required - pass this in
+    association :user    # user    is required - pass this in
     amount 1
     commit { Digest::SHA1.hexdigest(SecureRandom.hex) }
 

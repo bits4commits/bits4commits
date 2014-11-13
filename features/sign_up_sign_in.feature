@@ -5,7 +5,7 @@ Feature: Visitors should be able to sign_up and sign_in
 
 
   Scenario Outline: Visitors should see sign_up and sign_in links on all pages
-    Given I'm not signed in
+    Given I am not signed in
     When  I visit the <page> page
     Then  I should be on the <page> page
     And   I should see "Sign up" in the "header" area
@@ -24,7 +24,7 @@ Feature: Visitors should be able to sign_up and sign_in
       | "seldon/seldons-project github-project deposits"           |
 
   Scenario: Visitors should see sign_up but not sign_in links on sign_in page
-    Given I'm not signed in
+    Given I am not signed in
     When  I visit the "sign_in" page
     Then  I should be on the "sign_in" page
     And   I should see "Sign up" in the "header" area
@@ -32,15 +32,15 @@ Feature: Visitors should be able to sign_up and sign_in
     And   I should not see "Sign out" in the "header" area
 
   Scenario: Visitors should see sign_in but not sign_up links on sign_up page
-    Given I'm not signed in
+    Given I am not signed in
     When  I visit the "sign_up" page
     Then  I should be on the "sign_up" page
     And   I should not see "Sign up" in the "header" area
     But   I should see "Sign in" in the "header" area
     And   I should not see "Sign out" in the "header" area
 
-  Scenario Outline: Logged in users should see only sign_out link on every page
-    Given I'm signed in as "seldon"
+  Scenario Outline: Signed in users should see only sign_out link on every page
+    Given I am signed in via "github" as "seldon"
     When  the project syncs with the remote repo
     And   I visit the <page> page
     Then  I should be on the <page> page
@@ -62,7 +62,7 @@ Feature: Visitors should be able to sign_up and sign_in
       | "seldon/seldons-project github-project deposits"           |
 
   Scenario: Devise rejects invalid logins
-    Given I'm not signed in
+    Given I am not signed in
     When  I visit the "sign_in" page
     Then  I should be on the "sign_in" page
     And   I should see "Sign in E-mail Password Remember me"
@@ -78,7 +78,7 @@ Feature: Visitors should be able to sign_up and sign_in
     And   I should see "Invalid email or password"
 
   Scenario: Visitors should be able to sign up with an email address
-    Given I'm not signed in
+    Given I am not signed in
     When  I visit the "home" page
     When  I click "Sign up" within the "header" area
     Then  I should be on the "sign_up" page
@@ -130,6 +130,7 @@ Feature: Visitors should be able to sign_up and sign_in
     Then  I should be on the "home" page
     And   I should see "Sign up or Sign in"
     And   I should see "A message with a confirmation link has been sent"
+    And   one "default" identity should exist for a user named "new-guy"
     And   there should be 1 email sent
 
     When  I visit the "sign_in" page
@@ -148,22 +149,57 @@ Feature: Visitors should be able to sign_up and sign_in
     And   I fill "Password" with: "new-guys-password"
     And   I click "Sign in"
     Then  I should be on the "home" page
-    And   I should see "new-guy@example.com / 0.00000000 Ƀ / Sign out"
+    And   I should see "new-guy / 0.00000000 Ƀ / Sign out"
     And   I should see "Signed in successfully"
 
-   Scenario: Visitors should be able to sign up with GitHub oauth
-     Given I'm not signed in
-     When  I visit the "sign_up" page
-     And   I click "Sign in with Github"
-     Then  I should be on the "/login/oauth/authorize" page
-     Then  some magic stuff happens in the cloud
+  Scenario: Visitors should be able to sign up with GitHub oauth
+    Given I am not signed in
+    And   I am signed in to "github" as "new-guy"
+    When  I visit the "sign_up" page
+    And   I click "Sign in with GitHub"
+    Then  I should be on the "home" page
+    And   I should see "new-guy / 0.00000000 Ƀ / Sign out"
+    And   I should see "Successfully authenticated from GitHub account"
+    And   one "default" identity should exist for a user named "new-guy"
+    And   one "github" identity should exist for a user named "new-guy"
 
-     Given a GitHub user named "seldon" exists
-     When  I visit the "sign_in" page
-     And   I click "Sign in with Github"
-     Then  I should be on the "home" page
-     And   I should see "seldon / 0.00000000 Ƀ / Sign out"
-     And   I should see "Successfully authenticated from GitHub account"
+  Scenario: Visitors should be able to sign up with BitBucket oauth
+    Given I am not signed in
+    And   I am signed in to "bitbucket" as "new-guy"
+    When  I visit the "sign_up" page
+    And   I click "Sign in with BitBucket"
+    Then  I should be on the "home" page
+    And   I should see "new-guy / 0.00000000 Ƀ / Sign out"
+    And   I should see "Successfully authenticated from BitBucket account"
+    And   one "default" identity should exist for a user named "new-guy"
+    And   one "bitbucket" identity should exist for a user named "new-guy"
 
-# TODO:
-#   Scenario: Users signed up via email should be able to merge via GitHub oauth
+  Scenario: Users signed up via email should be able to merge via oauth
+    Given I am not signed in
+    And   I visit the "sign_up" page
+    And   I fill "E-mail" with: "new-guy@example.com"
+    And   I fill "Password" with: "new-guys-password"
+    And   I fill "Password confirmation" with: "new-guys-password"
+    And   I click "Sign up"
+    Then  one "default" identity should exist for a user named "new-guy"
+
+    When  I confirm the email address: "new-guy@example.com"
+    And   I visit the "sign_in" page
+    And   I am signed in to "github" as "new-guy"
+    And   I click "Sign in with GitHub"
+    Then  I should be on the "home" page
+    And   I should see "new-guy / 0.00000000 Ƀ / Sign out"
+    And   I should see "Successfully authenticated from GitHub account"
+    And   one "default" identity should exist for a user named "new-guy"
+    And   one "github" identity should exist for a user named "new-guy"
+
+    When  I sign out
+    And   I visit the "sign_in" page
+    And   I am signed in to "bitbucket" as "the-same-new-guy"
+    And   I click "Sign in with BitBucket"
+    Then  I should be on the "home" page
+    And   I should see "new-guy / 0.00000000 Ƀ / Sign out"
+    And   I should see "Successfully authenticated from GitHub account"
+    And   one "default" identity should exist for a user named "new-guy"
+    And   one "github" identity should exist for a user named "new-guy"
+    And   one "bitbucket" identity should exist for a user named "new-guy"

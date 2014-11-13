@@ -50,7 +50,12 @@ class ProjectsController < ApplicationController
   end
 
   def decide_tip_amounts
+p "decide_tip_amounts  IN" if DBG
+
     authorize! :decide_tip_amounts, @project
+
+p "decide_tip_amounts MID request.patch?=#{request.patch?}" if DBG
+
     if request.patch?
       @project.available_amount # preload anything required to get the amount, otherwise it's loaded during the assignation and there are undesirable consequences
       percentages = params[:project][:tips_attributes].values.map{|tip| tip['amount_percentage'].to_f}
@@ -59,8 +64,18 @@ class ProjectsController < ApplicationController
         return
       end
       raise "wrong data" if percentages.min < 0
+
+# @project.tips.each {|tip| tip.user_id ||= 1 ; tip.commit_message ||= "I DID THIS" }
+@project.tips.each { |tip| p ""
+p "user       = #{tip.user.nickname}" if tip.user
+p "id         = #{tip.id}"
+p "user_id    = #{tip.user_id}"
+p "project_id = #{tip.project_id}"
+p "msg        = #{tip.commit_message}"
+p "amount     = #{tip.amount}" } if DBG
+
       @project.attributes = params.require(:project).permit(tips_attributes: [:id, :amount_percentage])
-      if @project.save
+      if @project.save!
         message = I18n.t('notices.tips_decided')
         if @project.has_undecided_tips?
           redirect_to decide_tip_amounts_project_path(@project), notice: message

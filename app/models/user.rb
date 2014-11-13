@@ -4,16 +4,20 @@ class User < ActiveRecord::Base
   devise :database_authenticatable, :registerable, :recoverable,
          :rememberable, :trackable, :validatable, :confirmable
 
-  devise :omniauthable, :omniauth_providers => [:github]
+  devise :omniauthable, :omniauth_providers => [:github , :bitbucket]
 
   # Validations
   validates :bitcoin_address, bitcoin_address: true
 
   # Associations
-  has_many :tips
+  has_many :tips ,                inverse_of: :user
+  has_one  :tip4commit_identity , inverse_of: :user , :autosave => true , :dependent => :destroy
+  has_one  :github_identity ,     inverse_of: :user , :autosave => true , :dependent => :destroy
+  has_one  :bitbucket_identity ,  inverse_of: :user , :autosave => true , :dependent => :destroy
 
   # Callbacks
   before_create :set_login_token!, unless: :login_token?
+  before_create :build_default_identity , :autosave => true
 
   # Instance Methods
   def github_url
@@ -40,21 +44,38 @@ class User < ActiveRecord::Base
     end
   end
 
-  def self.create_with_omniauth!(auth_info)
+  def self.create_with_omniauth! provider , email , nickname
+p "create_with_omniauth  IN provider=#{provider} email=#{email} nick=#{nickname}" if DBG
+
     generated_password = Devise.friendly_token.first(Devise.password_length.min)
-    create do |user|
-      user.email    = auth_info.primary_email
+user =
+    create! do |user|
+      user.email    = email
       user.password = generated_password
-      user.nickname = auth_info.nickname
+      user.nickname = nickname
+
       user.skip_confirmation!
     end
+
+    identity_params = { :email => email , :nickname => nickname }
+    case provider
+    when 'github' ;    user.build_github_identity    identity_params ;
+    when 'bitbucket' ; user.build_bitbucket_identity identity_params ;
+#     when 'github' ;
+# p "create_with_omniauth BUILDING user_id=#{user.id}" if DBG
+#         user.build_github_identity    identity_params ;
+#       user.github_identity = (GithubIdentity.create!    :email => email , :nickname => nickname , :user_id => user.id) ;
+    end
+
+print "create_with_omniauth OUT nick=#{user.nickname} email=#{user.email} github_identity=#{(user.github_identity)? user.github_identity.to_yaml : "nil"}\n" if DBG
+user
   end
 
   def self.find_by_commit(commit)
     email = commit.commit.author.email
     nickname = commit.author.try(:login)
 
-    find_by(email: email) || find_by(nickname: nickname)
+    find_by(email: email) || find_by(nickname: nickname) # TODO: nickname per provider
   end
 
   private
@@ -64,5 +85,12 @@ class User < ActiveRecord::Base
       self.login_token = SecureRandom.urlsafe_base64
       break login_token unless User.exists?(login_token: login_token)
     end
+  end
+
+  def build_default_identity
+p "build_default_identity nickname  IN='#{self.nickname || (email.split '@').first}'" if DBG
+
+    self.nickname ||= (email.split '@').first
+    build_tip4commit_identity :email => email , :nickname => nickname
   end
 end

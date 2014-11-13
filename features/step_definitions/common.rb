@@ -1,8 +1,13 @@
+DBG=false
+
 Before do
   ActionMailer::Base.deliveries.clear
 
   # mock branches method to prevent api call
   Project.any_instance.stub(:branches).and_return(%w(master))
+
+  # preload sti models
+  load File.join "app","models","identity.rb"
 
   @default_tip     = CONFIG["tip"]
   @default_our_fee = CONFIG["our_fee"]
@@ -11,44 +16,71 @@ end
 
 After do |scenario|
   OmniAuth.config.test_mode = false
+  User.omniauth_providers.each {|provider| OmniAuth.config.mock_auth.delete provider }
 
   CONFIG["tip"]     = @default_tip
   CONFIG["our_fee"] = @default_our_fee
   CONFIG["min_tip"] = @default_min_tip
 
-#   Cucumber.wants_to_quit = true if scenario.status.eql? :failed
-#   Cucumber.wants_to_quit = true if scenario.status.eql? :undefined
+  Cucumber.wants_to_quit = true if scenario.status.eql? :failed
+  Cucumber.wants_to_quit = true if scenario.status.eql? :undefined
 #   Cucumber.wants_to_quit = true if scenario.status.eql? :pending
 end
 
-def mock_github_user nickname
-  email = "#{nickname.parameterize}@example.com"
+def sign_in_via_email nickname
+  step "a developer named \"#{nickname}\" exists with a bitcoin address"
+  step "I am not signed in"
+  step "I visit the \"sign_in\" page"
+  step "I fill \"E-mail\" with: \"#{make_primary_email nickname}\""
+  step "I fill \"Password\" with: \"#{default_password}\""
+  step "I click \"Sign in\""
+end
 
-  OmniAuth.config.test_mode = true
-  OmniAuth.config.mock_auth[:github] = {
-    "info" => {
-      "nickname"        => nickname ,
-      "primary_email"   => email    ,
-      "verified_emails" => [email]  ,
-    },
-  }.to_ostruct
+Given /^I am signed in via "(.*?)" as "(.*?)"$/ do |provider , nickname|
+p "step 'I am signed in via \"#{provider}\" as \"#{nickname}\"'  IN=#{User.count} users" if DBG
 
+  is_email_sign_in  = provider.downcase.eql? 'email'
+
+  # NOTE: scenarios that click oauth links directly will have no entry in test @users
   step "a developer named \"#{nickname}\" exists without a bitcoin address"
-end
 
-Given /^a GitHub user named "(.*?)" exists$/ do |nickname|
-  mock_github_user nickname
-end
+  (step "I confirm the email address: \"#{make_primary_email nickname}\"") rescue true
+  step "I am signed in to \"#{provider}\" as \"#{nickname}\"" unless is_email_sign_in
+  step "I visit the \"sign_in\" page"
 
+  case provider.downcase
+  when 'email' ;     sign_in_via_email nickname ;        flash = "Signed in successfully" ;
+  when 'github' ;    click_on "Sign in with GitHub" ;    flash = "Successfully authenticated" ;
+  when 'bitbucket' ; click_on "Sign in with BitBucket" ; flash = "Successfully authenticated" ;
+  else fail "unknown sign in option \"#{provider}\""
+  end
+
+user = User.find_by :nickname => nickname ; print "step 'I am signed in via \"#{provider}\" as \"#{nickname}\"' OUT=#{User.count} users\n\ttip4commit_identity=#{user.tip4commit_identity.present?}\n\tgithub_identity=#{user.github_identity.present?}\n\tbitbucket_identity=#{user.bitbucket_identity.present?}\n" if DBG
+
+  page.should have_content flash
+end
+=begin
 Given /^I'm signed in as "(.*?)"$/ do |nickname|
-  mock_github_user nickname
+  step "I am signed in via \"email\" as \"#{nickname}\""
+#=begin
+p "step 'I'm signed in as'  IN=#{nickname} #{User.count} users"
+# TODO: IS refactored to allow email (default) github and bitbucket sign-in
+#    transition to step "I am signed in via \"email\" as \"#{nickname}\""
+
+  mock_oauth_user :github , nickname
   visit root_path
   first(:link, "Sign in").click
-  click_on "Sign in with Github"
-  page.should have_content("Successfully authenticated")
-end
+  click_on "Sign in with GitHub"
 
-Given /^I'm not signed in$/ do
+p "step 'I'm signed in as' OUT=#{nickname} #{User.count} users"
+
+  page.should have_content("Successfully authenticated")
+#=end
+end
+=end
+Given /^I am not signed in$/ do
+p "step 'I sign out'=#{User.count} users" if DBG
+
   visit root_path
   if page.has_content?("Sign out")
     click_on "Sign out"
@@ -60,9 +92,11 @@ Given /^I'm not signed in$/ do
   OmniAuth.config.test_mode = false
 end
 
-Given (/^I sign in as "(.*?)"$/) { |nickname| step "I'm signed in as \"#{nickname}\"" }
+Given /^I sign in via "(.*?)" as "(.*?)"$/ do |provider , nickname|
+  step "I am signed in via \"#{provider}\" as \"#{nickname}\""
+end
 
-Given (/^I sign out$/) { step "I'm not signed in" }
+Given (/^I sign out$/) { step "I am not signed in" }
 
 def parse_path_from_page_string page_string
   path = nil
@@ -164,10 +198,10 @@ When(/^the email counters are reset$/) do
 end
 
 When(/^I confirm the email address: "(.*?)"$/) do |email|
-  mail      = ActionMailer::Base.deliveries.select {|ea| ea.to.first.eql? email}.first
-  mail_body = mail.body.raw_source
+  this_mail = ActionMailer::Base.deliveries.select {|ea| ea.to.first.eql? email}.first
+  (ActionMailer::Base.deliveries.delete this_mail) || (raise "no confirmation pending for \"#{email}\"")
+
+  mail_body = this_mail.body.raw_source
   token     = mail_body.split('?confirmation_token=')[1].split('">Confirm my account').first
   visit "/users/confirmation?confirmation_token=#{token}"
 end
-
-Then  /^some magic stuff happens in the cloud$/ do ; true ; end ;

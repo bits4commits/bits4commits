@@ -207,7 +207,7 @@ hr:
       sign_in_with: "Prijavi se sa %{provider}"
     errors:
       primary_email: vasa glavna email adresa bi trebala biti potvrdena.
-      onmiauth_info: Nismo bili u stanju dohvatiti vasu informaciju.
+      omniauth_info: Nismo bili u stanju dohvatiti vasu informaciju.
   activerecord:
     attributes:
       user:

@@ -1,9 +1,11 @@
 FactoryGirl.define do
+  # preload Identity sti models
+  load File.join "app","models","identity.rb"
+
   factory :user do
-    sequence(:email) { |n| "test#{n}@gmail.com" }
-    password "password"
+    email       nil # required - pass this in
+    nickname    { ((email || "").split '@').first }
+    password    "password"
     login_token "login_token"
-    name 'kd'
-    nickname 'kd'
   end
 end
