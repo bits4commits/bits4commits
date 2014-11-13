@@ -1,6 +1,8 @@
 Feature: Developers may sign-up to receive tip offers
   Background:
     Given a "github" project named "seldon/seldons-project" exists
+    And   the project collaborators are:
+      | seldon |
     And   a developer named "yugo" exists with a bitcoin address
     And   our fee is "0"
     And   a deposit of "500" is made
