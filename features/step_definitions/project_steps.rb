@@ -1,5 +1,21 @@
 
-def create_github_project project_name
+def github_projects
+  [@github_project_1 , @github_project_2 , @github_project_3].compact
+end
+
+def bitbucket_projects
+  [@bitbucket_project_1 , @bitbucket_project_2 , @bitbucket_project_3].compact
+end
+
+def create_github_project project_name , is_mock_project = true
+  # NOTE: when is_mock_project is false the app will actually fetch via network
+  #       this is the old "find or create" GUI functionality
+  #           so obviously the actual repo must exist
+  #       projects created in this way will not have a bitcoin_address
+  #           but will have valid data such as: github_id , avatar_url ,
+  #           source_full_name , description , watchers_count , language
+  #       up to three of each host are cached with a reference to the most recent
+
   if (@github_project_1.present? && (project_name.eql? @github_project_1.full_name)) ||
      (@github_project_2.present? && (project_name.eql? @github_project_2.full_name))
     raise "duplicate project_name '#{project_name}'"
@@ -7,12 +23,19 @@ def create_github_project project_name
     raise "the maximum of three test projects already exist"
   end
 
-  new_project = Project.create! :full_name       => project_name , # e.g. "me/my-project"
-                                :github_id       => Digest::SHA1.hexdigest(project_name) ,
-                                :bitcoin_address => 'mq4NtnmQoQoPfNWEPbhSvxvncgtGo6L8WY'
-  if    @github_project_2.present? ; @github_project_3 = new_project ;
-  elsif @github_project_1.present? ; @github_project_2 = new_project ;
-  else                               @github_project_1 = new_project ;
+  if is_mock_project
+    new_project = Project.create! :full_name       => project_name , # e.g. "me/my-project"
+                                  :github_id       => Digest::SHA1.hexdigest(project_name) ,
+                                  :bitcoin_address => 'mq4NtnmQoQoPfNWEPbhSvxvncgtGo6L8WY'
+  else
+    new_project = Project.find_or_create_by_url project_name # e.g. "me/my-project"
+  end
+
+  unless github_projects.include? new_project
+    if    @github_project_2.present? ; @github_project_3 = new_project ;
+    elsif @github_project_1.present? ; @github_project_2 = new_project ;
+    else                               @github_project_1 = new_project ;
+    end
   end
 
   new_project
@@ -36,6 +59,8 @@ Given(/^a "(.*?)" project named "(.*?)" exists$/) do |provider , project_name|
     @current_project = create_github_project    project_name
   when 'bitbucket'
     @current_project = create_bitbicket_project project_name
+  when 'real-github'
+    @current_project = create_github_project    project_name , false
   else raise "unknown provider \"#{provider}\""
   end
 
@@ -45,14 +70,6 @@ end
 When /^regarding the "(.*?)" project named "(.*?)"$/ do |provider , project_name|
   # NOTE: @current_project is also assigned in step 'a "..." project named "..." exists'
   @current_project = find_project provider , project_name
-end
-
-def github_projects
-  [@github_project_1 , @github_project_2 , @github_project_3].compact
-end
-
-def bitbucket_projects
-  [@bitbucket_project_1 , @bitbucket_project_2 , @bitbucket_project_3].compact
 end
 
 def project_provider project
