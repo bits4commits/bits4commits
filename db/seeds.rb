@@ -5,3 +5,8 @@
 #
 #   cities = City.create([{ name: 'Chicago' }, { name: 'Copenhagen' }])
 #   Mayor.create(name: 'Emanuel', city: cities.first)
+
+
+Project.create :host      => 'github' ,
+               :full_name => 'tip4commit/tip4commit' ,
+               :github_id => 15898794

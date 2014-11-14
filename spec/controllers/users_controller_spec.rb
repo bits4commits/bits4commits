@@ -19,7 +19,7 @@ describe UsersController do
   end
 
   describe '#show' do
-    let(:user)    { create :user , :email => "some-dood@somehost.net" }
+    let(:user)    { create :user , :email => "me@somehost.net" }
     let(:subject) { get :show , :nickname => user.nickname }
 
     context 'when logged in' do
@@ -27,7 +27,7 @@ describe UsersController do
 
       context 'when user found' do
         context 'when viewing own page' do
-          before { allow(user).to receive(:id).and_return(@current_user.id) }
+          before { allow(user).to receive(:nickname).and_return(@current_user.nickname) }
           it 'renders show template' do
             expect(subject).to render_template :show
           end
@@ -38,12 +38,13 @@ describe UsersController do
 
           it 'assigns @user' do
             subject
-            expect(assigns[:user].name).to eq 'some-dood'
+            expect(assigns[:user].class)   .to eq User
+            expect(assigns[:user].nickname).to eq 'current-user'
           end
 
           it 'assigns @user_tips' do
             subject
-            expect(assigns[:user_tips].name).to eq 'Tip'
+            expect(assigns[:user_tips].class).to eq ActiveRecord::Associations::CollectionProxy::ActiveRecord_Associations_CollectionProxy_Tip
           end
 
           it 'assigns @recent_tips' do

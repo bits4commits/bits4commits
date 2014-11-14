@@ -1,5 +1,3 @@
-DBG=false
-
 require 'simplecov'
 SimpleCov.start 'rails'
 

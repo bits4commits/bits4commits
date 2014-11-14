@@ -3,7 +3,7 @@ require 'spec_helper'
 describe User do
   describe 'display_name' do
     context 'when email and nickname are present and name is present' do
-      let(:a_user) { create :user , :email => 'some-dood@example.com' , :nickname => 'dood-mon' , :name => 'dood mon' }
+      let(:a_user) { create :user , :email => 'some-dood@somehost.net' , :nickname => 'dood-mon' , :name => 'dood mon' }
 
       it 'returns name' do
         expect(a_user.display_name).to eq a_user.name
@@ -11,7 +11,7 @@ describe User do
     end
 
     context 'when email and nickname are present but name is absent' do
-      let(:a_user) { create :user , :email => 'some-dood@example.com' , :nickname => 'dood-mon' }
+      let(:a_user) { create :user , :email => 'some-dood@somehost.net' , :nickname => 'dood-mon' }
 
       it 'returns nickname' do
         expect(a_user.display_name).to eq a_user.nickname
@@ -19,7 +19,7 @@ describe User do
     end
 
     context 'when email is present but nickname is absent' do
-      let(:a_user) { create :user , :email => 'some-dood@example.com' }
+      let(:a_user) { create :user , :email => 'some-dood@somehost.net' }
 
       it 'returns name split from email' do
         expect(a_user.display_name).to eq 'some-dood'
@@ -34,7 +34,7 @@ describe User do
   end
 
   describe 'bitcoin_address' do
-    let(:a_user) { create :user , :email => 'some-dood@example.com' }
+    let(:a_user) { create :user , :email => 'some-dood@somehost.net' }
 
     context 'when address is blank' do
       it 'should be valid' do

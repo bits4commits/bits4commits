@@ -1,6 +1,6 @@
 class Project < ActiveRecord::Base
   acts_as_paranoid
-  
+
   has_many :deposits # todo: only confirmed deposits
   has_many :tips, inverse_of: :project
   accepts_nested_attributes_for :tips
@@ -35,13 +35,15 @@ class Project < ActiveRecord::Base
   end
 
   def update_repository_info repo
-    self.github_id = repo.id
-    self.name = repo.name
-    self.full_name = repo.full_name
+    self.github_id        = repo.id
+    self.name             = repo.name
+    self.full_name        = repo.full_name
     self.source_full_name = repo.source.full_name rescue ''
-    self.description = repo.description
-    self.watchers_count = repo.watchers_count
-    self.language = repo.language
+    self.description      = repo.description
+    self.watchers_count   = repo.watchers_count
+    self.language         = repo.language
+    self.avatar_url       = repo.organization.rels[:avatar].href if repo.organization.present?
+
     self.save!
   end
 
@@ -130,7 +132,7 @@ class Project < ActiveRecord::Base
   end
 
   def tip_for commit
-print "tip_for amount=#{next_tip_amount} tip?=#{(Tip.exists? commit: commit.sha)? (Tip.find_by commit: commit.sha).commit[0..2] : "nil"} user=#{(u = User.find_by_commit commit)? "[#{u.id}]='#{u.nickname}' '#{u.email}' '#{(u.bitcoin_address)? "yes" : "nil"}'" : "nil"}\n" if DBG
+print "tip_for amount=#{next_tip_amount} tip?=#{(Tip.exists? commit: commit.sha)? (Tip.find_by commit: commit.sha).commit[0..2] : "nil"} user=#{(u = User.find_by_commit commit)? "[#{u.id}]='#{u.nickname}' '#{u.email}' '#{(u.bitcoin_address)? "yes" : "nil"}'" : "nil"}\n" if ENV['DEBUG']
 
     if (next_tip_amount > 0) && !Tip.exists?(commit: commit.sha)
       return unless (user = User.find_by_commit commit)
@@ -142,7 +144,7 @@ print "tip_for amount=#{next_tip_amount} tip?=#{(Tip.exists? commit: commit.sha)
       else
         amount = next_tip_amount
       end
-p "tip_for CREATING TIP" if DBG
+p "tip_for CREATING TIP" if ENV['DEBUG']
       # create tip
       tip = tips.create({ user: user,
                           amount: amount,

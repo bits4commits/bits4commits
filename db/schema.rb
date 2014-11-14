@@ -35,10 +35,10 @@ ActiveRecord::Schema.define(version: 20141112064004) do
   add_index "deposits", ["project_id"], name: "index_deposits_on_project_id"
 
   create_table "identities", force: true do |t|
-    t.string   "nickname"
-    t.string   "email"
+    t.string   "nickname",   null: false
+    t.string   "email",      null: false
+    t.integer  "user_id",    null: false
     t.string   "type"
-    t.integer  "user_id"
     t.datetime "created_at"
     t.datetime "updated_at"
   end

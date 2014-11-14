@@ -112,7 +112,7 @@ class Tip < ActiveRecord::Base
   end
 
   def notify_user
-p "notify_user  IN" if DBG
+p "notify_user  IN" if ENV['DEBUG']
 
     if amount && amount > 0 && user.bitcoin_address.blank? &&
         !user.unsubscribed && !project.disable_notifications &&
@@ -129,7 +129,7 @@ p "notify_user  IN" if DBG
   end
 
   def notify_user_if_just_decided
-p "notify_user_if_just_decided user=#{(user)? user.nickname : 'nil'} amount_was.nil?=#{amount_was.nil?} amount=#{amount} #{(amount_was.nil? and amount)? 'notifying' : ''}" if DBG
+p "notify_user_if_just_decided user=#{(user)? user.nickname : 'nil'} amount_was.nil?=#{amount_was.nil?} amount=#{amount} #{(amount_was.nil? and amount)? 'notifying' : ''}" if ENV['DEBUG']
 
     notify_user if amount_was.nil? and amount
   end

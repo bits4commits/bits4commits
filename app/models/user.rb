@@ -45,7 +45,7 @@ class User < ActiveRecord::Base
   end
 
   def self.create_with_omniauth! provider , email , nickname
-p "create_with_omniauth  IN provider=#{provider} email=#{email} nick=#{nickname}" if DBG
+p "create_with_omniauth  IN provider=#{provider} email=#{email} nick=#{nickname}" if ENV['DEBUG']
 
     generated_password = Devise.friendly_token.first(Devise.password_length.min)
 user =
@@ -62,12 +62,12 @@ user =
     when 'github' ;    user.build_github_identity    identity_params ;
     when 'bitbucket' ; user.build_bitbucket_identity identity_params ;
 #     when 'github' ;
-# p "create_with_omniauth BUILDING user_id=#{user.id}" if DBG
+# p "create_with_omniauth BUILDING user_id=#{user.id}" if ENV['DEBUG']
 #         user.build_github_identity    identity_params ;
 #       user.github_identity = (GithubIdentity.create!    :email => email , :nickname => nickname , :user_id => user.id) ;
     end
 
-print "create_with_omniauth OUT nick=#{user.nickname} email=#{user.email} github_identity=#{(user.github_identity)? user.github_identity.to_yaml : "nil"}\n" if DBG
+print "create_with_omniauth OUT nick=#{user.nickname} email=#{user.email} github_identity=#{(user.github_identity)? user.github_identity.to_yaml : "nil"}\n" if ENV['DEBUG']
 user
   end
 
@@ -88,7 +88,7 @@ user
   end
 
   def build_default_identity
-p "build_default_identity nickname  IN='#{self.nickname || (email.split '@').first}'" if DBG
+p "build_default_identity nickname  IN='#{self.nickname || (email.split '@').first}'" if ENV['DEBUG']
 
     self.nickname ||= (email.split '@').first
     build_tip4commit_identity :email => email , :nickname => nickname

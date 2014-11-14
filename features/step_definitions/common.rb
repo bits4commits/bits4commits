@@ -1,5 +1,3 @@
-DBG=false
-
 Before do
   ActionMailer::Base.deliveries.clear
 
@@ -37,7 +35,7 @@ def sign_in_via_email nickname
 end
 
 Given /^I am signed in via "(.*?)" as "(.*?)"$/ do |provider , nickname|
-p "step 'I am signed in via \"#{provider}\" as \"#{nickname}\"'  IN=#{User.count} users" if DBG
+p "step 'I am signed in via \"#{provider}\" as \"#{nickname}\"'  IN=#{User.count} users" if ENV['DEBUG']
 
   is_email_sign_in  = provider.downcase.eql? 'email'
 
@@ -55,7 +53,7 @@ p "step 'I am signed in via \"#{provider}\" as \"#{nickname}\"'  IN=#{User.count
   else fail "unknown sign in option \"#{provider}\""
   end
 
-user = User.find_by :nickname => nickname ; print "step 'I am signed in via \"#{provider}\" as \"#{nickname}\"' OUT=#{User.count} users\n\ttip4commit_identity=#{user.tip4commit_identity.present?}\n\tgithub_identity=#{user.github_identity.present?}\n\tbitbucket_identity=#{user.bitbucket_identity.present?}\n" if DBG
+user = User.find_by :nickname => nickname ; print "step 'I am signed in via \"#{provider}\" as \"#{nickname}\"' OUT=#{User.count} users\n\ttip4commit_identity=#{user.tip4commit_identity.present?}\n\tgithub_identity=#{user.github_identity.present?}\n\tbitbucket_identity=#{user.bitbucket_identity.present?}\n" if ENV['DEBUG']
 
   page.should have_content flash
 end
@@ -79,7 +77,7 @@ p "step 'I'm signed in as' OUT=#{nickname} #{User.count} users"
 end
 =end
 Given /^I am not signed in$/ do
-p "step 'I sign out'=#{User.count} users" if DBG
+p "step 'I sign out'=#{User.count} users" if ENV['DEBUG']
 
   visit root_path
   if page.has_content?("Sign out")

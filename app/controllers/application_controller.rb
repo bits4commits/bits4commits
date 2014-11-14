@@ -57,7 +57,7 @@ print "\nload_user --> " +
 "is_via_tips = #{self.is_a? TipsController}\n" +
 "is_standard_path    = #{params[:id]      .present? && (self.is_a? UsersController)}\n" +
 "is_association_path = #{params[:user_id] .present?}\n" +
-"is_pretty_path      = #{params[:nickname].present?}\n" if DBG
+"is_pretty_path      = #{params[:nickname].present?}\n" if ENV['DEBUG']
 
     return unless (is_via_user = self.is_a? UsersController) ||
                   (is_via_tips = self.is_a? TipsController)
@@ -69,12 +69,12 @@ print "\nload_user --> " +
     if is_pretty_path
       @user = User.where('lower(`nickname`) = ?' , params[:nickname].downcase).first
 
-print "load_user is_pretty_path '#{params[:nickname].downcase}' @user=#{@user.to_yaml}\n" if DBG
+print "load_user is_pretty_path '#{params[:nickname].downcase}' @user=#{@user.to_yaml}\n" if ENV['DEBUG']
     elsif (user_id = (is_via_user && params[:id])    ||
                      (is_via_tips && params[:user_id]))
       @user = User.find_by :id => user_id
 
-print "load_user !is_pretty_path @user=#{@user.to_yaml}\n" if DBG
+print "load_user !is_pretty_path @user=#{@user.to_yaml}\n" if ENV['DEBUG']
 
       redirect_to user_tips_pretty_path @user.nickname if is_via_tips and @user.present?
     end

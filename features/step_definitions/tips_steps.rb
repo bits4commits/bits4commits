@@ -33,7 +33,7 @@ def add_new_commit commit_id , nickname , params = {}
   @new_commits[project_id]            ||= {}
   @new_commits[project_id][commit_id]   = defaults.deep_merge params
 
-p "add_new_commit nickname='#{nickname}' commit_id='#{commit_id}' - #{@new_commits[project_id].keys.size} for #{@current_project.full_name}" if DBG
+p "add_new_commit nickname='#{nickname}' commit_id='#{commit_id}' - #{@new_commits[project_id].keys.size} for #{@current_project.full_name}" if ENV['DEBUG']
 end
 
 def find_new_commit commit_id
@@ -90,13 +90,14 @@ Then(/^the most recent commit should be "(.*?)"$/) do |commit_id|
   @current_project.reload.last_commit.should eq commit_id
 end
 
-When(/^the new commits are loaded$/) do
-  raise "no commits have been assigned" if @new_commits.nil?
+def load_new_commits
+  @new_commits ||= Hash.new
 
-  [@github_project_1 , @github_project_2 , @github_project_3].each do |project|
+  (github_projects + bitbucket_projects).each do |project|
     next if project.nil?
 
     project.reload
+    @new_commits[project.id] ||= Hash.new
     new_commits = @new_commits[project.id].values.map(&:to_ostruct)
     project.should_receive(:new_commits).and_return(new_commits)
     project.tip_commits
@@ -152,20 +153,15 @@ Then(/^the project should hold tips$/) do
 end
 
 Given(/^the project has undecided tips$/) do
-  # NOTE: these are attributed to the first collaborator of the @current_project
-  #           which will result in a User instantiated if none exists
-  #       this user's password will be changed to default_password
-  #       this step must be preceeded by step "the project syncs with the remote repo"
-  #           which itself must be preceeded by step "a '...' project named '...' exists"
-  #           and then by step "the project collaborators are:"
-  raise "no project exists"        if @current_project.nil?
-  raise "no project collaborators" if @current_project.collaborators.blank?
+  # NOTE: these are attributed to the some collaborator of the @current_project
+  #           which will result in the instantiation of a User if none exists
+#       this User's password will be changed to default_password if such User exists
+  #       this step must be preceeded by step "a '...' project named '...' exists"
+  raise "no project exists" if @current_project.nil?
 
-  collaborator_name = @current_project.collaborators.first.login
-  user              = @users[collaborator_name]
-  user.password     = default_password
-  provider          = project_provider @current_project
+  step "the project syncs with the remote repo"
 
+  user = find_or_create_user 'unknown-user'
   create :undecided_tip , :project => @current_project , :user => user
   @current_project.reload.should have_undecided_tips
 end
@@ -182,7 +178,7 @@ Then(/^the project should have (\d+) undecided tips$/) do |arg1|
 end
 
 Given(/^I send a forged request to set the amount of the first undecided tip of the project$/) do
-print "step 'I send a forged request' tips=#{@current_project.tips.undecided.to_yaml}\n" if DBG
+print "step 'I send a forged request' tips=#{@current_project.tips.undecided.to_yaml}\n" if ENV['DEBUG']
   tip = @current_project.tips.undecided.first
   tip.should_not be_nil
   params = {

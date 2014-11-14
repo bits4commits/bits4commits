@@ -7,7 +7,7 @@ Feature: A project collaborator can display the tipping policies of the project
     And   the project syncs with the remote repo
 
   Scenario: A collaborator changes the tipping policies
-    Given I am signed in via "email" as "daneel"
+    Given I am signed in via "github" as "daneel"
     When  I visit the "seldon/seldons-project github-project" page
     Then  I should be on the "seldon/seldons-project github-project" page
     And   I click "Change project settings"

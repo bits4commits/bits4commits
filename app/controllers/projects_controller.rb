@@ -50,11 +50,11 @@ class ProjectsController < ApplicationController
   end
 
   def decide_tip_amounts
-p "decide_tip_amounts  IN" if DBG
+p "decide_tip_amounts  IN" if ENV['DEBUG']
 
     authorize! :decide_tip_amounts, @project
 
-p "decide_tip_amounts MID request.patch?=#{request.patch?}" if DBG
+p "decide_tip_amounts MID request.patch?=#{request.patch?}" if ENV['DEBUG']
 
     if request.patch?
       @project.available_amount # preload anything required to get the amount, otherwise it's loaded during the assignation and there are undesirable consequences
@@ -72,7 +72,7 @@ p "id         = #{tip.id}"
 p "user_id    = #{tip.user_id}"
 p "project_id = #{tip.project_id}"
 p "msg        = #{tip.commit_message}"
-p "amount     = #{tip.amount}" } if DBG
+p "amount     = #{tip.amount}" } if ENV['DEBUG']
 
       @project.attributes = params.require(:project).permit(tips_attributes: [:id, :amount_percentage])
       if @project.save!

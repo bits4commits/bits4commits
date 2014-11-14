@@ -1,10 +1,10 @@
 class CreateIdentities < ActiveRecord::Migration
   def change
     create_table :identities do |t|
-      t.string  :nickname
-      t.string  :email
+      t.string  :nickname , :null => false
+      t.string  :email ,    :null => false
+      t.integer :user_id ,  :null => false
       t.string  :type
-      t.integer :user_id
 
       t.timestamps
     end
